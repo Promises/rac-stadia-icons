@@ -115,3 +115,7 @@ the launcher installs.
   contributors (Lynder063), and Henning Berge.
 - The Stadia pictures: Xelu's FREE Controllers & Keyboard PROMPTS by Nicolae (XELU) Berbece, CC0
   ([art/CREDITS.md](art/CREDITS.md)).
+
+The hub icon shows the Stadia logo, as on the controller's Stadia button. Stadia and its logo
+are trademarks of Google LLC; they are used only to say which controller the icons are for. This
+mod is not made or endorsed by Google.
