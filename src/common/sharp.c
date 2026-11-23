@@ -5,21 +5,14 @@
  */
 #include "sharp.h"
 
+#include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
-#if OPENRAC_MOD_API_MINOR == 35
-/* 1.35's table ends with moby_uid: 1.36's sharp_cells comes right after it. */
-_Static_assert(STADIA_ICONS_SHARP_OFFSET == sizeof(openrac_api),
-               "openrac_api 1.35 does not end with moby_uid");
-#endif
-
-stadia_icons_sharp_cells_fn stadia_icons_sharp_cells(const openrac_api* api) {
-    stadia_icons_sharp_cells_fn fn = NULL;
-    if (api->api_minor < 36 || api->size < STADIA_ICONS_SHARP_OFFSET + sizeof fn) {
-        return NULL;
-    }
-    memcpy(&fn, (const char*)api + STADIA_ICONS_SHARP_OFFSET, sizeof fn);
-    return fn;
+int stadia_icons_has_sharp(const openrac_api* api) {
+    return api->api_minor >= 36 &&
+           api->size >= offsetof(openrac_api, sharp_cells) + sizeof api->sharp_cells &&
+           api->sharp_cells != NULL;
 }
 
 /* One set of cells serves every page: the fonts are painted alike, with one palette. */
@@ -30,9 +23,8 @@ static openrac_sharp_page s_pages[STADIA_ICONS_FONTS];
 
 int stadia_icons_send_sharp(const openrac_api* api, openrac_mod* mod,
                             const stadia_icons_plan* plan, int fonts) {
-    const stadia_icons_sharp_cells_fn sharp_cells = stadia_icons_sharp_cells(api);
-    if (sharp_cells == NULL || fonts < 1 || fonts > STADIA_ICONS_FONTS) {
-        return -1;
+    if (!stadia_icons_has_sharp(api) || fonts < 1 || fonts > STADIA_ICONS_FONTS) {
+        return STADIA_ICONS_NO_SHARP;
     }
     for (int c = 0; c < STADIA_ICONS_CELLS; ++c) {
         stadia_icons_cell_rgb(plan, c, s_rgb[c]);
@@ -55,5 +47,5 @@ int stadia_icons_send_sharp(const openrac_api* api, openrac_mod* mod,
         s_pages[f].cells = s_cells;
         s_pages[f].count = STADIA_ICONS_CELLS;
     }
-    return sharp_cells(mod, s_pages, fonts);
+    return api->sharp_cells(mod, s_pages, fonts);
 }

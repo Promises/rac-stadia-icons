@@ -105,7 +105,9 @@ static void tick(void* user) {
     snprintf(line, sizeof line,
              "painted the %d fonts %08x at 0x%08x, %d of %d colours their own; sharp cells: %s",
              count, (unsigned)hash, (unsigned)bank, s_plan.own, s_plan.colours,
-             sharp < 0 ? "not in this port" : sharp == OPENRAC_OK ? "sent" : "refused");
+             sharp == STADIA_ICONS_NO_SHARP ? "not in this port"
+             : sharp == OPENRAC_OK          ? "sent"
+                                            : "refused");
     say(line);
 }
 

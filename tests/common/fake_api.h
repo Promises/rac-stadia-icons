@@ -5,8 +5,9 @@
  * The host table the load tests hand the library (openrac_mod.h), as the port does: console memory
  * of the test's own, a log that counts its lines, settings with Trace on, no hook points but the
  * tick callback, which the test keeps and calls; relocate_data as the executable's own (no level's
- * copy). make_api is a port of the SDK's interface (1.35, no sharp cells); make_api_136 one of 1.36
- * whose sharp_cells the test keeps what it is handed.
+ * copy). make_api is a port of the SDK's interface with sharp_cells unset (the mod's check for a
+ * port without sharp cells); make_api_sharp the same with sharp_cells, which keeps what it is
+ * handed.
  */
 #ifndef STADIA_ICONS_FAKE_API_H
 #define STADIA_ICONS_FAKE_API_H
@@ -154,19 +155,13 @@ static openrac_api make_api(const char* game, const char* version) {
     return api;
 }
 
-/* A port of 1.36: 1.35's table, then sharp_cells. */
-typedef struct api_136 {
-    openrac_api api;
-    stadia_icons_sharp_cells_fn sharp_cells;
-} api_136;
-
 static int s_sharp_calls;
-static int32_t s_sharp_count;
+static int s_sharp_count;
 static const openrac_sharp_page* s_sharp_pages;
 static uint32_t s_sharp_hash; /* the fonts' hash when sharp_cells was called */
 static uint32_t fonts_hash(void);
 
-static int32_t host_sharp_cells(openrac_mod* mod, const openrac_sharp_page* pages, int32_t count) {
+static int host_sharp_cells(openrac_mod* mod, const openrac_sharp_page* pages, int count) {
     (void)mod;
     ++s_sharp_calls;
     s_sharp_count = count;
@@ -175,14 +170,10 @@ static int32_t host_sharp_cells(openrac_mod* mod, const openrac_sharp_page* page
     return OPENRAC_HOOK_OK;
 }
 
-static api_136 make_api_136(const char* game, const char* version) {
-    api_136 t;
-    memset(&t, 0, sizeof t);
-    t.api = make_api(game, version);
-    t.api.size = sizeof t;
-    t.api.api_minor = 36;
-    t.sharp_cells = host_sharp_cells;
-    return t;
+static openrac_api make_api_sharp(const char* game, const char* version) {
+    openrac_api api = make_api(game, version);
+    api.sharp_cells = host_sharp_cells;
+    return api;
 }
 
 static void put_u32(openrac_gaddr a, uint32_t v) {
@@ -236,7 +227,7 @@ static uint8_t* read_level(const char* var) {
 }
 
 /* The library's entry points, and its query checked: its id, its version and the interface its
- * manifest names (1.1), whatever the SDK it was built with. */
+ * manifest names (1.36), whatever the SDK it was built with. */
 static openrac_mod_info s_info;
 static openrac_mod_load_fn open_mod(const char* path) {
     void* lib = open_library(path);
@@ -247,14 +238,14 @@ static openrac_mod_load_fn open_mod(const char* path) {
     memset(&s_info, 0, sizeof s_info);
     s_info.size = sizeof s_info;
     query(&s_info);
-    CHECK(s_info.api_major == OPENRAC_MOD_API_MAJOR && s_info.api_minor == 1);
+    CHECK(s_info.api_major == OPENRAC_MOD_API_MAJOR && s_info.api_minor == 36);
     CHECK(strcmp(s_info.id, "stadia-icons") == 0 && strcmp(s_info.version, "1.0.0") == 0);
     s_memory = calloc(1, MEMORY_SIZE);
     CHECK(s_memory != NULL);
     return load;
 }
 
-/* The game's fonts (a level's bank, `bank`) on a port of 1.36: on the first tick the sharp cells
+/* The game's fonts (a level's bank, `bank`) on a port with sharp cells: on the first tick the sharp cells
  * are handed over, a page for each of the three fonts, while the fonts are still the game's
  * (`known` their hash); then the fonts are painted as on a port without sharp cells (`painted`),
  * and each page's cells show what the painted texels do. */
@@ -262,9 +253,9 @@ static void play_sharp(const char* game, const stadia_icons_disc* d, openrac_mod
                        openrac_mod_load_fn load, const uint8_t* bank, uint32_t known,
                        uint32_t painted) {
     memset(s_memory, 0, MEMORY_SIZE);
-    api_136 t = make_api_136(game, d->version);
+    openrac_api api = make_api_sharp(game, d->version);
     s_tick = NULL;
-    CHECK(load(&t.api, mod) == 0 && s_tick != NULL);
+    CHECK(load(&api, mod) == 0 && s_tick != NULL);
     lay_table(d, BANK);
     memcpy(s_memory + BANK, bank, LEVEL_BANK_BYTES);
     s_sharp_calls = 0;

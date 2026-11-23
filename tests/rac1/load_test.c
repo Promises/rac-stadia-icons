@@ -8,7 +8,7 @@
  * console's memory or fonts that are not the game's, it changes nothing. With OPENRAC_RAC1_LEVEL
  * naming a level that openrac-extractor --decompile wrote (decompiler_out/rac1/levels/NN), the
  * game's own fonts are laid at each disc's addresses too: painted on the first tick, and left alone
- * after; and on a port of 1.36, the sharp cells handed over before the fonts are painted.
+ * after; and on a port with sharp cells, the sharp cells handed over before the fonts are painted.
  *
  * Run with the library's path: load_test <stadia_icons.dylib|.so|.dll>.
  */

@@ -9,8 +9,8 @@
  * another disc's addresses it does not see, at its own disc's it does (said once, with Trace). With
  * OPENRAC_RAC2_LEVEL naming a level folder of the same layout as rac1's decompiled ones
  * (core_index.bin and unpacked/core_data.bin), the game's own fonts are laid at each disc's
- * addresses too: painted on the first tick, and left alone after; and on a port of 1.36, the sharp
- * cells handed over before the fonts are painted.
+ * addresses too: painted on the first tick, and left alone after; and on a port with sharp cells,
+ * the sharp cells handed over before the fonts are painted.
  *
  * Run with the library's path: load_test <stadia_icons.dylib|.so|.dll>.
  */

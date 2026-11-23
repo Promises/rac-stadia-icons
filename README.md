@@ -46,11 +46,12 @@ The game's button cells are 24 x 16 texels, so at the game's resolution a Stadia
 so in those cells the label (L1, R2, L...) is written again in letters of 3 x 5 texels on the
 button's grey.
 
-A port of mod interface 1.36 or later can draw sharp cells (`openrac_api.sharp_cells`): before it
-paints the fonts the mod hands the port each cell drawn 6 times as large (144 x 96, the picture
-itself, labels as Stadia drew them), and the port draws those where the cells are shown. On an
-older port the mod checks the port's interface and table size, does not call it, and the buttons
-are the game-resolution ones. The mod still asks only for interface 1.1.
+The mod needs OpenRAC with mod interface 1.36 ([OpenRAC #803](https://github.com/OpenRAC/OpenRAC/pull/803)),
+whose ports draw sharp cells (`openrac_api.sharp_cells`): before it paints the fonts the mod hands
+the port each cell drawn 6 times as large (144 x 96, the picture itself, labels as Stadia drew
+them), and the port draws those where the cells are shown. The launcher offers the mod only to a
+port of 1.36 or later; the mod still checks the port's interface and table before the call, and
+on a port without sharp cells it would paint the game-resolution buttons alone.
 
 ## How it works
 
@@ -82,9 +83,9 @@ colours of its own (clear and three greys), the mod leaves the fonts as they are
 
 The [tests](tests/) paint fonts made in the test (nothing outside the cells changes, each cell is
 the picture's in its own greys, fewer greys when the palette is short, nothing at all when it is
-too short), check the sharp cells against ports of 1.35 and 1.36 (called only on the second, a
-page a font, each cell's colours those of the painted texels), and load the library as the port
-does, in each game at each disc's addresses. With `OPENRAC_RAC1_LEVEL` or `OPENRAC_RAC2_LEVEL`
+too short), check the sharp cells against ports with and without them (called only on a port that
+has them, a page a font, each cell's colours those of the painted texels), and load the library as
+the port does, in each game at each disc's addresses. With `OPENRAC_RAC1_LEVEL` or `OPENRAC_RAC2_LEVEL`
 naming a level that `openrac-extractor --decompile` wrote (`core_index.bin` and
 `unpacked/core_data.bin`), they paint the game's own fonts too, with and without sharp cells (the
 cells handed over while the fonts are still the game's).
@@ -99,11 +100,15 @@ build/stadia_icons_preview icons.png [decompiler_out/rac1/levels/01]
 ## Building
 
 ```sh
-python3 tools/fetch_sdk.py          # the SDK sdk.lock pins (1.35.0), into .sdk/
+python3 tools/fetch_sdk.py          # the SDK sdk.lock pins (1.37.0), into .sdk/
 cmake -S . -B build -G Ninja
 cmake --build build && ctest --test-dir build
-python3 .sdk/openrac-mod-sdk-1.35.0/tools/package_mod.py build/package/stadia_icons -o dist
+python3 .sdk/openrac-mod-sdk-1.37.0/tools/package_mod.py build/package/stadia_icons -o dist
 ```
+
+Until an `sdk-v*` release has interface 1.36, `sdk.lock` pins the SDK's source at a commit of
+OpenRAC's develop (`git` and `commit`; `tools/fetch_sdk.py` fetches that commit's `sdk/` alone);
+it goes back to a release's `url` and `sha256` once one does.
 
 `python3 tools/stadia_art.py > src/common/stadia_art.h` writes the pictures' tables again (Pillow).
 The workflow builds and tests every platform on each push; a tag `v<version>` publishes the release

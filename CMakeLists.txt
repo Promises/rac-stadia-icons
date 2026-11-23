@@ -3,7 +3,7 @@
 # forked from xbox-icons. The mod's library (C, on the SDK's openrac/openrac_mod.h), one for both
 # games (src/mod.c picks the game; src/rac1 and src/rac2 hold each game's addresses, src/common the
 # painting and the sharp cells), and its tests: painting on fonts made in the test, the sharp cells
-# against host tables of 1.35 and 1.36, and the library as the port loads it, in each game.
+# against host tables with and without them, and the library as the port loads it, in each game.
 # tools/preview.c paints fonts into a PNG, to see the buttons without the game.
 #
 #   python3 tools/fetch_sdk.py                     # the SDK sdk.lock pins, into .sdk/
@@ -30,8 +30,8 @@ if(NOT OpenRACMod_DIR)
     endif()
   endif()
 endif()
-# 1.35: the sharp cells' place in the table is read off 1.35's last entry (src/common/sharp.h).
-find_package(OpenRACMod 1.35 REQUIRED)
+# 1.36: the SDK's sharp cells (openrac_api.sharp_cells, src/common/sharp.h).
+find_package(OpenRACMod 1.36 REQUIRED)
 
 set(STADIA_ICONS_COMMON src/common/paint.c)
 set(STADIA_ICONS_GAMES src/rac1/rac1.c src/rac2/rac2.c)

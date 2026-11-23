@@ -1,12 +1,16 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
  * Copyright (c) 2026 Henning Berge
  *
- * Sharp cells (sharp.h) against host tables made here: a port of interface 1.35 (no sharp_cells),
- * one that says 1.36 with a table too short for it, one with the field but saying 1.35, and one of
- * 1.36 with it. Only the last is called: once, with a page for each font (256 x 128, scale 6, the
- * ten cells of row 96), each cell's RGB the painted cell's as the GS shows it and its sharp drawing
- * 144 x 96, on the same clear colour, and the port's answer handed back.
+ * Sharp cells (sharp.h) against host tables made here (the SDK's openrac_api). The manifest asks
+ * for 1.36, so the launcher gives the mod no port without sharp_cells; the mod checks anyway, and
+ * these are the ports it must not call: one of 1.35 (a table that ends before sharp_cells), one
+ * that says 1.36 with a table too short for it, one with the field but saying 1.35, and one of
+ * 1.36 with the field unset. A port of 1.36 or later with it set is called: once, with a page for
+ * each font (256 x 128, scale 6, the ten cells of row 96), each cell's RGB the painted cell's as
+ * the GS shows it and its sharp drawing 144 x 96, on the same clear colour, and the port's answer
+ * handed back.
  */
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,65 +28,62 @@
         }                                                                                          \
     } while (0)
 
-/* A 1.36 table: 1.35's, then sharp_cells. */
-typedef struct api_136 {
-    openrac_api api;
-    stadia_icons_sharp_cells_fn sharp_cells;
-} api_136;
-
 static int s_calls;
 static openrac_mod* s_mod_seen;
-static int32_t s_count;
-static int32_t s_answer;
+static int s_count;
+static int s_answer;
 static openrac_sharp_page s_pages_seen[3];
 
-static int32_t host_sharp_cells(openrac_mod* mod, const openrac_sharp_page* pages, int32_t count) {
+static int host_sharp_cells(openrac_mod* mod, const openrac_sharp_page* pages, int count) {
     ++s_calls;
     s_mod_seen = mod;
     s_count = count;
-    for (int32_t i = 0; i < count && i < 3; ++i) {
+    for (int i = 0; i < count && i < 3; ++i) {
         s_pages_seen[i] = pages[i];
     }
     return s_answer;
 }
 
-static api_136 make(uint32_t minor, uint32_t size) {
-    api_136 t;
+/* A table of interface 1.`minor`, `size` bytes of it the port's, sharp_cells set. */
+static openrac_api make(uint32_t minor, size_t size) {
+    openrac_api t;
     memset(&t, 0, sizeof t);
-    t.api.size = size;
-    t.api.api_major = OPENRAC_MOD_API_MAJOR;
-    t.api.api_minor = minor;
+    t.size = (uint32_t)size;
+    t.api_major = OPENRAC_MOD_API_MAJOR;
+    t.api_minor = minor;
     t.sharp_cells = host_sharp_cells;
     return t;
 }
 
 int main(void) {
-    /* sharp_cells sits where 1.36 appends it. */
-    CHECK(offsetof(api_136, sharp_cells) == STADIA_ICONS_SHARP_OFFSET);
-
     static stadia_icons_plan plan;
     uint8_t* fonts[3] = {s_fonts[0], s_fonts[1], s_fonts[2]};
     test_lay();
     CHECK(stadia_icons_plan_paint(fonts, 3, s_palette, &plan) == 0);
     openrac_mod* mod = (openrac_mod*)&plan; /* any handle: the mod only passes it back */
 
-    /* No sharp_cells: not read, not called. */
-    const api_136 old = make(35, sizeof(openrac_api));
-    const api_136 short_table = make(36, sizeof(openrac_api));
-    const api_136 old_minor = make(35, sizeof(api_136));
-    CHECK(stadia_icons_sharp_cells(&old.api) == NULL);
-    CHECK(stadia_icons_sharp_cells(&short_table.api) == NULL);
-    CHECK(stadia_icons_sharp_cells(&old_minor.api) == NULL);
-    CHECK(stadia_icons_send_sharp(&old.api, mod, &plan, 3) == -1);
-    CHECK(stadia_icons_send_sharp(&short_table.api, mod, &plan, 3) == -1);
-    CHECK(stadia_icons_send_sharp(&old_minor.api, mod, &plan, 3) == -1);
+    /* No sharp_cells: not called. */
+    const size_t before = offsetof(openrac_api, sharp_cells);
+    const size_t with = before + sizeof(((openrac_api*)0)->sharp_cells);
+    const openrac_api old = make(35, before);
+    const openrac_api short_table = make(36, before);
+    const openrac_api old_minor = make(35, with);
+    openrac_api unset = make(36, with);
+    unset.sharp_cells = NULL;
+    const openrac_api* none[] = {&old, &short_table, &old_minor, &unset};
+    for (size_t i = 0; i < sizeof none / sizeof none[0]; ++i) {
+        CHECK(!stadia_icons_has_sharp(none[i]));
+        CHECK(stadia_icons_send_sharp(none[i], mod, &plan, 3) == STADIA_ICONS_NO_SHARP);
+    }
     CHECK(s_calls == 0);
 
-    /* 1.36: one call, a page a font. */
-    const api_136 now = make(36, sizeof(api_136));
-    CHECK(stadia_icons_sharp_cells(&now.api) == host_sharp_cells);
+    /* 1.36 (and a later port's whole table): one call, a page a font. */
+    CHECK(stadia_icons_has_sharp(&(openrac_api){.size = (uint32_t)with, .api_minor = 36,
+                                                .sharp_cells = host_sharp_cells}));
+    const openrac_api now = make(OPENRAC_MOD_API_MINOR, sizeof(openrac_api));
+    CHECK(stadia_icons_has_sharp(&now));
     s_answer = OPENRAC_OK;
-    CHECK(stadia_icons_send_sharp(&now.api, mod, &plan, 3) == OPENRAC_OK);
+    CHECK(stadia_icons_send_sharp(&now, mod, &plan, 3) == OPENRAC_OK);
     CHECK(s_calls == 1 && s_mod_seen == mod && s_count == 3);
 
     /* What the cells show once painted, to hold the pages to. */
@@ -141,9 +142,9 @@ int main(void) {
 
     /* The title's two fonts: two pages; and the port's refusal is handed back. */
     s_answer = OPENRAC_E_UNKNOWN;
-    CHECK(stadia_icons_send_sharp(&now.api, mod, &plan, 2) == OPENRAC_E_UNKNOWN);
+    CHECK(stadia_icons_send_sharp(&now, mod, &plan, 2) == OPENRAC_E_UNKNOWN);
     CHECK(s_calls == 2 && s_count == 2);
-    CHECK(stadia_icons_send_sharp(&now.api, mod, &plan, 0) == -1 && s_calls == 2);
+    CHECK(stadia_icons_send_sharp(&now, mod, &plan, 0) == STADIA_ICONS_NO_SHARP && s_calls == 2);
 
     printf("stadia_icons_sharp_test: ok\n");
     return 0;
