@@ -1,6 +1,6 @@
 {
-  "about": "The OpenRAC mod SDK this mod builds against: tools/fetch_sdk.py puts it in .sdk/, where CMakeLists.txt finds it. The mod needs interface 1.36 (sharp_cells, OpenRAC #803), which no sdk-v* release has yet: it is the SDK's source at a commit of OpenRAC's develop. Back to a release's url and sha256 once an sdk-v* release has it.",
-  "version": "1.37.0",
-  "git": "https://github.com/OpenRAC/OpenRAC",
-  "commit": "09c7188762638429829b77dae6df61d181329946"
+  "about": "The OpenRAC mod SDK this mod builds against: tools/fetch_sdk.py downloads it into .sdk/ and checks its SHA-256; CMakeLists.txt finds it there. 1.36 is the first SDK with sharp_cells (OpenRAC #803).",
+  "version": "1.36.0",
+  "url": "https://github.com/OpenRAC/OpenRAC/releases/download/sdk-v1.36.0/openrac-mod-sdk-1.36.0.zip",
+  "sha256": "815e97307f5d004bae9afe53e67db217727b3c75b7fbe5f26b2ff7e8496c3638"
 }
