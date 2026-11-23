@@ -7,6 +7,8 @@ menus, the save screens, the vendor.
 
 With the mod off, the game is the PlayStation 2 game.
 
+![The game's buttons and the Stadia buttons that take their place](docs/buttons.png)
+
 | The game's | Becomes |
 |---|---|
 | Cross | **A** (the bottom button, as on a Stadia controller) |
