@@ -1,0 +1,38 @@
+{
+  "format": 2,
+  "id": "stadia-icons",
+  "name": "Stadia button icons",
+  "version": "1.0.0",
+  "author": "Henning Berge and Lynder063",
+  "description": "The game's PlayStation 2 button icons as a Stadia controller's, from the real Stadia button art: A, B, X and Y for Cross, Circle, Square and Triangle, Stadia's L1, R1, L2 and R2, and its sticks for L3 and R3. Everywhere the game prints a button: help, menus, the vendor. Sharper on a port that draws sharp cells. For Ratchet & Clank and Going Commando. A fork of xbox-icons.",
+  "license": "GPL-3.0-or-later",
+  "homepage": "https://github.com/Promises/rac-stadia-icons",
+  "api": "1.1",
+  "multiplayer": "cosmetic",
+  "games": {
+    "rac1": [
+      "pal",
+      "ntsc"
+    ],
+    "rac2": [
+      "ntsc",
+      "pal",
+      "ntsc2"
+    ]
+  },
+  "conflicts": [
+    {
+      "id": "xbox-icons",
+      "reason": "both paint the game's button icons"
+    }
+  ],
+  "settings": [
+    {
+      "key": "trace",
+      "name": "Trace",
+      "type": "bool",
+      "default": false,
+      "description": "For bug reports: a line in the game's log each time the fonts are painted, or found not to be the game's."
+    }
+  ]
+}
